@@ -1,16 +1,28 @@
 import * as css from 'css';
 import isPrefixer from '../../../../utils/isPrefixer';
-import { Sort, DeclarationObject, Prefix } from '../../../../typed/sort';
+import {
+  Sort,
+  Prefix,
+  DeclarationObject,
+  IndexedDeclaration
+} from '../../../../typed/sort';
 
 class Alphabetical implements Sort {
-  constructor() {
-   }
+  constructor() { }
 
-  sort = (decs: Array<css.Declaration>) => {
+  process(decs: Array<css.Declaration>) {
     const copy = [...decs];
-    const { props, prefixes } = this.divideDeclarations(copy);
+    const { props, prefixes, comments } = this.divideDeclarations(copy);
     const _prefixes = this.sortPrefixes(prefixes);
-    const sorted = props.sort((a, b) => {
+    const sorted = this.sort(props);
+    const rearranged = this.rearrangePrefixes(sorted, _prefixes);
+    const result = this.addComments(rearranged, comments);
+    return result;
+  }
+
+  sort(decs: Array<css.Declaration>) {
+    const properties = decs.filter(val => val.type !== 'comment');
+    return properties.sort((a, b) => {
       if ((!a.property || !b.property) || (a.property === b.property)) {
         return 0;
       }
@@ -19,11 +31,35 @@ class Alphabetical implements Sort {
       }
       return 1;
     });
+  }
 
-    return this.rearrangePrefixes(sorted, _prefixes);
-  };
+  addComments(decs: Array<css.Declaration>, comments: Array<IndexedDeclaration> = []) {
+    comments.forEach(comment => {
+      const { position = {} } = comment.value;
+      const line = position.start?.line;
+      if (line) {
+        const decPosition = this.findPropertyPositionByLine(decs, line);
+        if (decPosition !== -1) {
+          decs.splice(decPosition, 0, comment.value);
+          return;
+        }
+        decs.splice(comment.index, 0, comment.value);
+      }
+    });
+    return decs;
+  }
 
-  sortPrefixes = (prefixes: Array<Prefix>) => {
+  findPropertyPositionByLine(decs: Array<css.Declaration>, line: number) {
+    return decs.reduce((total, current, currentIndex) => {
+      const { position = {}, type } = current;
+      if (type !== 'comment' && position.start?.line === line) {
+        return currentIndex;
+      }
+      return total;
+    }, -1);
+  }
+
+  sortPrefixes(prefixes: Array<Prefix>) {
     return prefixes.sort((a, b) => {
       if ((!a.property || !b.property) || (a.property === b.property)) {
         return 0;
@@ -33,18 +69,18 @@ class Alphabetical implements Sort {
       }
       return -1;
     });
-  };
+  }
 
-  rearrangePrefixes = (props: Array<css.Declaration>, prefixes: Array<Prefix>) => {
+  rearrangePrefixes(props: Array<css.Declaration>, prefixes: Array<Prefix>) {
     const rearranged = props.reduce((total: Array<css.Declaration>, current) => {
       const associatedPrefixes = this.getAssociatedPrefixes(current, prefixes);
       return total.concat([...associatedPrefixes, current]);
     }, []);
     const result = rearranged.concat(prefixes);
     return result;
-  };
+  }
 
-  getAssociatedPrefixes = (dec: css.Declaration, prefixes: Array<Prefix>) => {
+  getAssociatedPrefixes(dec: css.Declaration, prefixes: Array<Prefix>) {
     const toRemove: Array<number> = [];
     const associated = prefixes.filter((value, index) => {
       const result = value.prefixValue === dec.property;
@@ -60,12 +96,23 @@ class Alphabetical implements Sort {
       }
     }
     return associated;
-  };
+  }
 
-  divideDeclarations = (decs: Array<css.Declaration>) => {
-    const initial: DeclarationObject = { props: [], prefixes: [] };
-    return decs.reduce((total: DeclarationObject, current: css.Declaration) => {
-      const { props, prefixes } = total;
+  divideDeclarations(decs: Array<css.Declaration>) {
+    const initial: DeclarationObject = { props: [], prefixes: [], comments: [] };
+    return decs.reduce((total, current, index) => {
+      const { props, prefixes, comments = [] } = total;
+      if (current.type === 'comment') {
+        return {
+          props,
+          prefixes,
+          comments: comments.concat({
+            value: current,
+            index
+          })
+        };
+      }
+
       const prefixValue = this.isPrefixer(current);
       if (prefixValue) {
         const prefix: Prefix = {
@@ -74,25 +121,27 @@ class Alphabetical implements Sort {
         };
         return {
           props,
-          prefixes: prefixes.concat(prefix)
+          prefixes: prefixes.concat(prefix),
+          comments
         };
       }
 
       return {
         props: props.concat(current),
-        prefixes
+        prefixes,
+        comments
       };
     }, initial);
-  };
+  }
 
-  isPrefixer = (dec: css.Declaration) => {
+  isPrefixer(dec: css.Declaration) {
     const { property } = dec;
     if (!property) {
       return null;
     }
 
     return isPrefixer(property);
-  };
+  }
 }
 
 export default Alphabetical;

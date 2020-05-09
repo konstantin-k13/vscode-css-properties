@@ -80,7 +80,7 @@ class RuleHandler {
       const Algorithm: SortConstructable | undefined = getSortingAlgorithm(this.preferences.sorting);
       if (Algorithm) {
         const sort: Sort = new Algorithm();
-        const sorted = sort.sort(decs);
+        const sorted = sort.process(decs);
         rule.declarations = sorted;
       }
     }
