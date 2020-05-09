@@ -21,3 +21,14 @@ export type DeclarationObject = {
   props: Array<css.Declaration>,
   prefixes: Array<Prefix>
 };
+
+export type ControlRule = css.Media | css.Supports;
+
+export type Preferences = {
+  sorting: string,
+  keepComments: boolean
+};
+
+export type Workers = {
+  [type: string]: any
+};

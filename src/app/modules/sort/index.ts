@@ -1,9 +1,9 @@
-import GroupedByType from './sort/GroupedByType';
-import Alphabetical from './sort/Alphabetical';
-import { SortConstructable } from '../typed/sort';
-import { ALPHABETICAL, GROUPED_BY_TYPE } from '../constants/sort';
+import GroupedByType from './algorithm/Grouped';
+import Alphabetical from './algorithm/Alphabetical';
+import { SortConstructable } from '../../typed/sort';
+import { ALPHABETICAL, GROUPED_BY_TYPE } from '../../constants/sort';
 
-const defaultPreference = GROUPED_BY_TYPE;
+const defaultPreference = ALPHABETICAL;
 const algorithmHolder: any = {
   [GROUPED_BY_TYPE]: GroupedByType,
   [ALPHABETICAL]: Alphabetical

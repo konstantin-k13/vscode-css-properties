@@ -1,9 +1,10 @@
 import * as css from 'css';
-import isPrefixer from '../isPrefixer';
-import { Sort, DeclarationObject, Prefix } from '../../typed/sort';
+import isPrefixer from '../../../../utils/isPrefixer';
+import { Sort, DeclarationObject, Prefix } from '../../../../typed/sort';
 
 class Alphabetical implements Sort {
-  constructor() { }
+  constructor() {
+   }
 
   sort = (decs: Array<css.Declaration>) => {
     const copy = [...decs];
@@ -37,10 +38,10 @@ class Alphabetical implements Sort {
   rearrangePrefixes = (props: Array<css.Declaration>, prefixes: Array<Prefix>) => {
     const rearranged = props.reduce((total: Array<css.Declaration>, current) => {
       const associatedPrefixes = this.getAssociatedPrefixes(current, prefixes);
-
       return total.concat([...associatedPrefixes, current]);
     }, []);
-    return rearranged.concat(prefixes);
+    const result = rearranged.concat(prefixes);
+    return result;
   };
 
   getAssociatedPrefixes = (dec: css.Declaration, prefixes: Array<Prefix>) => {
@@ -52,9 +53,12 @@ class Alphabetical implements Sort {
       }
       return result;
     });
-    toRemove.forEach(val => {
-      prefixes.splice(val, 1);
-    });
+    if (associated.length) {
+      for (let i = toRemove.length - 1; i >= 0; i--) {
+        prefixes.splice(toRemove[i], 1);
+        toRemove.splice(i, 1);
+      }
+    }
     return associated;
   };
 

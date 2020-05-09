@@ -1,5 +1,5 @@
 import * as css from 'css';
-import { Sort } from '../../typed/sort';
+import { Sort } from '../../../../typed/sort';
 
 class GroupedByType implements Sort {
   constructor() { }
