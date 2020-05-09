@@ -35,17 +35,27 @@ class Alphabetical implements Sort {
   };
 
   rearrangePrefixes = (props: Array<css.Declaration>, prefixes: Array<Prefix>) => {
-    return props.reduce((total: Array<css.Declaration>, current) => {
+    const rearranged = props.reduce((total: Array<css.Declaration>, current) => {
       const associatedPrefixes = this.getAssociatedPrefixes(current, prefixes);
 
       return total.concat([...associatedPrefixes, current]);
     }, []);
+    return rearranged.concat(prefixes);
   };
 
   getAssociatedPrefixes = (dec: css.Declaration, prefixes: Array<Prefix>) => {
-    return prefixes.filter(value => {
-      return value.prefixValue === dec.property;
+    const toRemove: Array<number> = [];
+    const associated = prefixes.filter((value, index) => {
+      const result = value.prefixValue === dec.property;
+      if (result) {
+        toRemove.push(index);
+      }
+      return result;
     });
+    toRemove.forEach(val => {
+      prefixes.splice(val, 1);
+    });
+    return associated;
   };
 
   divideDeclarations = (decs: Array<css.Declaration>) => {
