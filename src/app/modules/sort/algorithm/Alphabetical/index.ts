@@ -1,11 +1,18 @@
 import * as css from 'css';
 import isPrefixer from '../../../../utils/isPrefixer';
+import { getCommentType } from '../../../../utils/helpers';
 import {
   Sort,
   Prefix,
   DeclarationObject,
   IndexedDeclaration
 } from '../../../../typed/sort';
+
+const EMPTY_LINE = {
+  type: 'rule',
+  selectors: [ '\n' ],
+  declarations: []
+};
 
 class Alphabetical implements Sort {
   constructor() { }
@@ -34,11 +41,19 @@ class Alphabetical implements Sort {
   }
 
   addComments(decs: Array<css.Declaration>, comments: Array<IndexedDeclaration> = []) {
+    let lastDocLine = -1;
     comments.forEach(comment => {
       const { position = {} } = comment.value;
-      const line = position.start?.line;
+      const commentType = getCommentType(comment.value);
+      const line = position.end?.line;
+
       if (line) {
-        const decPosition = this.findPropertyPositionByLine(decs, line);
+        if (commentType === 'doc') {
+          lastDocLine = comment.index;
+          decs.splice(comment.index, 0, comment.value);
+          return;
+        }
+        const decPosition = this.findRelatedPropertyPosition(decs, line);
         if (decPosition !== -1) {
           decs.splice(decPosition, 0, comment.value);
           return;
@@ -46,17 +61,28 @@ class Alphabetical implements Sort {
         decs.splice(comment.index, 0, comment.value);
       }
     });
+    if (lastDocLine !== -1) {
+      decs.splice(lastDocLine + 1, 0, EMPTY_LINE);
+    }
     return decs;
   }
 
-  findPropertyPositionByLine(decs: Array<css.Declaration>, line: number) {
-    return decs.reduce((total, current, currentIndex) => {
+  findRelatedPropertyPosition(decs: Array<css.Declaration>, line: number) {
+    const position = decs.reduce((total, current, currentIndex) => {
       const { position = {}, type } = current;
-      if (type !== 'comment' && position.start?.line === line) {
-        return currentIndex;
+      if (type !== 'comment') {
+        if (position.start?.line === line) {
+          /* If it's a comment describing current line */
+          return currentIndex;
+        }
+        if (position.start?.line === line + 1 && total === -1) {
+          /* If it's a comment describing next line (less importance) */
+          return currentIndex;
+        }
       }
       return total;
     }, -1);
+    return position;
   }
 
   sortPrefixes(prefixes: Array<Prefix>) {
