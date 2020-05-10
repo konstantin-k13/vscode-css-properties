@@ -1,11 +1,11 @@
 import * as css from 'css';
 import getSortingAlgorithm from '../sort';
 import * as ruleTypes from '../../constants/rule';
-import { ALPHABETICAL } from '../../constants/sort';
+import { GROUPED_BY_TYPE } from '../../constants/sort';
 import { Preferences, Workers, Sort, SortConstructable, ControlRule } from '../../typed/sort';
 
 const defaultPreferences = {
-  sorting: ALPHABETICAL,
+  sorting: GROUPED_BY_TYPE,
   keepComments: true
 };
 

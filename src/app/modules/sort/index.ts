@@ -3,7 +3,7 @@ import Alphabetical from './algorithm/Alphabetical';
 import { SortConstructable } from '../../typed/sort';
 import { ALPHABETICAL, GROUPED_BY_TYPE } from '../../constants/sort';
 
-const defaultPreference = ALPHABETICAL;
+const defaultPreference = GROUPED_BY_TYPE;
 const algorithmHolder: any = {
   [GROUPED_BY_TYPE]: GroupedByType,
   [ALPHABETICAL]: Alphabetical
